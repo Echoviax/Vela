@@ -2,6 +2,8 @@ import discord
 import os
 from dotenv import load_dotenv
 
+from markov_model import MarkovModel
+
 load_dotenv()
 TOKEN = os.getenv('TOKEN')
 
@@ -18,12 +20,13 @@ intents.messages = True
 intents.message_content = True
 
 client = discord.Client(intents=intents)
+model = MarkovModel()
 
 @client.event
 async def on_ready():
     print(f'-> Logged in as {client.user}')
     print(f'-> I am in {len(client.guilds)} server(s).')
-    await client.change_presence(activity=discord.Game(name="Learning..."))
+    await client.change_presence(activity=discord.Activity(name="You", type=discord.ActivityType.watching))
 
 @client.event
 async def on_message(message: discord.Message):
@@ -32,7 +35,7 @@ async def on_message(message: discord.Message):
     if message.author == client.user or message.author.bot:
         return
 
-    # learn here
+    model.learn(message.content)
     message_counter += 1
 
     if message_counter >= SAVE_INTERVAL:
@@ -43,9 +46,8 @@ async def on_message(message: discord.Message):
 
     if should_speak:
         async with message.channel.typing():
-            # Generate a response
-
-            await message.channel.send("This is a placeholder")
+            response = model.generate(max_words=40)
+            await message.channel.send(response)
 
 def main():
     try:
