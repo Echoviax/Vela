@@ -1,4 +1,5 @@
 import pickle
+import re
 import discord
 import os
 from dotenv import load_dotenv
@@ -57,8 +58,11 @@ async def on_message(message: discord.Message):
     if message.author == client.user or message.author.bot:
         return
 
-    model.learn(message.content)
-    message_counter += 1
+    cleaned_content = re.sub(r'<@!?\d+>', '', message.content).strip()
+
+    if cleaned_content:
+        model.learn(message.content)
+        message_counter += 1
 
     if message_counter >= SAVE_INTERVAL:
         save_model(model)
