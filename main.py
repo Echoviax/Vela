@@ -1,3 +1,4 @@
+import pickle
 import discord
 import os
 from dotenv import load_dotenv
@@ -7,7 +8,8 @@ from markov_model import MarkovModel
 load_dotenv()
 TOKEN = os.getenv('TOKEN')
 
-SAVE_INTERVAL = 5
+MODEL_FILE = 'markov_model.pkl'
+SAVE_INTERVAL = 1
 message_counter = 0
 
 if not TOKEN:
@@ -19,8 +21,28 @@ intents = discord.Intents.default()
 intents.messages = True
 intents.message_content = True
 
+def load_model():
+    try:
+        with open(MODEL_FILE, 'rb') as f:
+            print("-> Loading existing model...")
+            return pickle.load(f)
+    except FileNotFoundError:
+        print("-> No existing model found, creating a new one.")
+        return MarkovModel()
+    except Exception as e:
+        print(f"Error loading model: {e}. Creating a new one.")
+        return MarkovModel()
+
+def save_model(model_to_save):
+    try:
+        with open(MODEL_FILE, 'wb') as f:
+            pickle.dump(model_to_save, f)
+            print(f"-> Model saved successfully to {MODEL_FILE}")
+    except Exception as e:
+        print(f"Error saving model: {e}")
+
 client = discord.Client(intents=intents)
-model = MarkovModel()
+model = load_model()
 
 @client.event
 async def on_ready():
@@ -39,7 +61,7 @@ async def on_message(message: discord.Message):
     message_counter += 1
 
     if message_counter >= SAVE_INTERVAL:
-        # Save to a local database
+        save_model(model)
         message_counter = 0
 
     should_speak = client.user.mentioned_in(message)
