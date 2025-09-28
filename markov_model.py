@@ -27,12 +27,21 @@ class MarkovModel:
             key = (prefix1, prefix2)
             self.model[key].append(suffix)
 
-    def generate(self, max_words: int = 30) -> str:
+    def generate(self, max_words: int = 30, seed_text: str = None) -> str:
         if not self.model:
             return "I haven't learned enough to speak... (This is hardcoded)"
 
         current_prefix = (self.START_TOKEN, self.START_TOKEN)
         output_words = []
+
+        current_prefix = (self.START_TOKEN, self.START_TOKEN)
+        if seed_text:
+            seed_words = self._tokenize(seed_text)
+            if len(seed_words) >= 2:
+                last_two_words = tuple(seed_words[-2:])
+                if self.model.get(last_two_words):
+                    current_prefix = last_two_words
+                    output_words.extend(current_prefix)
 
         for _ in range(max_words):
             possible_suffixes = self.model.get(current_prefix)

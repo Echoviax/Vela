@@ -72,7 +72,7 @@ async def on_message(message: discord.Message):
 
     if should_speak:
         async with message.channel.typing():
-            response = model.generate(max_words=40)
+            response = model.generate(max_words=40, seed_text=cleaned_content)
             await message.channel.send(response)
 
 def main():
